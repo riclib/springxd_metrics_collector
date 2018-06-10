@@ -7,7 +7,7 @@ Exposes an HTTP server that converts the REST metrics from springxd as prometheu
 `python springxd_metrics_collector.py <port> <server_url>`
 
 ## Example
-'python springxd_metrics_collector.py 1934 http://demo6819977.mockable.io'`
+`python springxd_metrics_collector.py 1934 http://demo6819977.mockable.io`
 
 Requires installing the following:
 `pip install prometheus_client requests`
