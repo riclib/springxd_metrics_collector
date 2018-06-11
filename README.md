@@ -1,13 +1,17 @@
 # springxd_metrics_collector
 
 ## Metric collector for SpringXD
-Exposes an HTTP server that converts the REST metrics from springxd as prometheus metrics/
+Exposes an HTTP server that converts the REST metrics from springxd as prometheus metrics
 
 ## Usage:
-`python springxd_metrics_collector.py <port> <server_url>`
-
+```
+springxd_metrics_collector  -listen-address string -springxd-url string
+  -listen-address string
+    	The address to listen on for HTTP requests. (default ":8080")
+  -springxd-url string
+    	The springxd server url.
+```
 ## Example
-`python springxd_metrics_collector.py 1934 http://demo6819977.mockable.io`
+`springxd_metrics_collector.py -listen-address :1934 -springxd-url http://demo6819977.mockable.io`
 
-## Requires installing the following to run
-`pip install prometheus_client requests`
+## No extra components required to install
