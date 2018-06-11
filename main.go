@@ -154,7 +154,7 @@ var (
 	)
 	threads = prometheus.NewGauge(
 		prometheus.GaugeOpts{
-			Name: "Threads",
+			Name: "springxd_threads",
 			Help: "SpringXD server memory",
 		},
 	)
