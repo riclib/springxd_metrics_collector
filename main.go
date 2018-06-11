@@ -211,7 +211,7 @@ func scrapeHealth() {
 	resp, _ := http.Get(*springxdURL + xdHealthPath)
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	log.Println(string(body[:]))
+	//	log.Println(string(body[:]))
 
 	err := json.Unmarshal(body, &r)
 	if err != nil {
@@ -229,7 +229,7 @@ func scrapeMetrics() {
 	resp, _ := http.Get(*springxdURL + xdMetricsPath)
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	log.Println(string(body[:]))
+	//	log.Println(string(body[:]))
 
 	err := json.Unmarshal(body, &r)
 	if err != nil {
