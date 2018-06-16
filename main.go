@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 const namespace = "springxd"
@@ -21,10 +22,6 @@ var (
 	addr        = flag.String("listen-address", ":9175", "The address to listen on for HTTP requests.")
 	springxdURL = flag.String("springxd-url", "", "The springxd server url. (mandatory)")
 )
-
-type healthResponse struct {
-	Status string
-}
 
 func scrapeMetrics(basename string, i interface{}) string {
 	var res string
@@ -71,9 +68,11 @@ func collect(base string, url string) string {
 }
 func handler(w http.ResponseWriter, r *http.Request) {
 	// Delegate http serving to Prometheus client library, which will call collector.Collect.
+	start := time.Now()
 	s := collect(namespace+"_health", *springxdURL+xdHealthPath)
 	s = s + collect(namespace+"_metrics", *springxdURL+xdMetricsPath)
-
+	end := time.Now()
+	s = s + fmt.Sprintf(namespace+"_scrape_duration_seconds %f\n", end.Sub(start).Seconds())
 	w.Write([]byte(s))
 }
 
