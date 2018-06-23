@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -17,9 +17,10 @@ import (
 const namespace = "springxd"
 const xdHealthPath = "/management/health"
 const xdMetricsPath = "/management/metrics"
+const xdJobsPath = "/jobs/executions"
 
 var (
-	addr        = flag.String("listen-address", ":9175", "The address to listen on for HTTP requests.")
+	port        = flag.String("listen-port", "9175", "The port to listen on for HTTP requests.")
 	springxdURL = flag.String("springxd-url", "", "The springxd server url. (mandatory)")
 )
 
@@ -53,6 +54,37 @@ func scrapeMetrics(basename string, i interface{}) string {
 	return res
 }
 
+func scrapeJobExecutionMetrics(basename string, i interface{}) string {
+	var res string
+	return res
+}
+
+func collectJobDefs(base string, u string) string {
+	var j interface{}
+	var err error
+
+	client := &http.Client{}
+	req := &http.Request{Method: "GET"}
+	req.URL, err = url.Parse(u)
+	if err != nil {
+		log.Fatalln("couldn't create request ")
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error retrieving " + u)
+		return ""
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	err = json.Unmarshal(body, &j)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println("Retrieved job executions")
+	return scrapeJobExecutionMetrics(base, j)
+
+}
 func collect(base string, url string) string {
 	var j interface{}
 	resp, _ := http.Get(url)
@@ -71,6 +103,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	s := collect(namespace+"_health", *springxdURL+xdHealthPath)
 	s = s + collect(namespace+"_metrics", *springxdURL+xdMetricsPath)
+	s = s + collectJobDefs(namespace+"_jobs", *springxdURL+xdJobsPath)
 	end := time.Now()
 	s = s + fmt.Sprintf(namespace+"_scrape_duration_seconds %f\n", end.Sub(start).Seconds())
 	w.Write([]byte(s))
@@ -79,8 +112,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 	if *springxdURL == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
+		log.Println("Test mode, retrieving metrics from json/ folder")
+		*springxdURL = "http://localhost:9175"
 	}
 	//	start := time.Now()
 
@@ -88,7 +121,23 @@ func main() {
 
 	// Expose the registered metrics via HTTP.
 	http.HandleFunc("/metrics", handler)
-	err := http.ListenAndServe(*addr, nil)
+
+	// default test endpoints
+	http.HandleFunc(xdJobsPath,
+		func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "json/jobs_executions.json")
+		})
+	http.HandleFunc(xdMetricsPath,
+		func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "json/management_metrics.json")
+		})
+	http.HandleFunc(xdHealthPath,
+		func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "json/management_health.json")
+		})
+
+	log.Printf("Listening for requests on localhost:" + *port)
+	err := http.ListenAndServe(":"+*port, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
